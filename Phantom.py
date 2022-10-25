@@ -1,9 +1,6 @@
 import numpy as np
 import fdNIRS
 
-def asdasd:
-    pass
-
 
 class Phantom:
     def __init__(self, name):

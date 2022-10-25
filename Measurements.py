@@ -3,10 +3,8 @@ import json
 import numpy as np
 from pathlib import Path
 
-def asdasd:
-    pass
 
-class fdNIRSMeasurement:
+class FDNIRSMeasurement:
 
     def __init__(self, location):
         self.measurement_location = location
@@ -28,22 +26,20 @@ class fdNIRSMeasurement:
             pass
 
 
-class PhantomMeasurement(fdNIRSMeasurement):
+class PhantomMeasurement(FDNIRSMeasurement):
     def __init__(self, location):
         super().__init__(location)
 
 
 class DualSlopePhantomMeasurement(PhantomMeasurement):
-    def __init__(self, location):
+    def __init__(self, location, common):
         super().__init__(location)
 
-        self.data = fdNIRSData(measurement=self)
-        self.amplitudes, self.phases = self.load_measurement_data()
+        self.data = FDNIRSData(measurement=self)
+        self.common = common
 
-        self.amplitudes_830 = self.data.amplitudes_830
-        self.amplitudes_685 = self.data.amplitudes_685
-        self.phases_830 = self.data.phases_830
-        self.phases_685 = self.data.phases_685
+        self.amplitude_pairs = self.separate2pairs(data=self.data.amplitudes)
+        self.phase_pairs = self.separate2pairs(data=self.data.amplitudes)
 
     def load_measurement_data(self):
         """
@@ -55,9 +51,17 @@ class DualSlopePhantomMeasurement(PhantomMeasurement):
 
         return amplitudes.reshape((amplitudes.shape[0], 2, 4)), phases.reshape((phases.shape[0], 2, 4))
 
+    def separate2pairs(self, data):
+        if self.common == 'detector':
+            return data.reshape(data.shape[0], 2, 2, 2)
+        elif self.common == 'source':
+            return data.reshape(data.shape[0], 2, 2, 2).swapaxes(2, 3)
+            pass
+            # TODO: Implement here
 
-class fdNIRSData:
-    def __init__(self, measurement: fdNIRSMeasurement):
+
+class FDNIRSData:
+    def __init__(self, measurement: FDNIRSMeasurement):
         self.measurement = measurement
 
         self.amplitudes, self.phases = self.load_measurement_data()
@@ -75,3 +79,4 @@ class fdNIRSData:
         phases = np.loadtxt(Path(self.measurement.measurement_location, "phase.csv"), delimiter=',')
 
         return amplitudes.reshape((amplitudes.shape[0], 2, 4)), phases.reshape((phases.shape[0], 2, 4))
+

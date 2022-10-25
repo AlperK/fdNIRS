@@ -55,5 +55,3 @@ def get_slopes(absorption_coefficient, scattering_coefficient, frequency):
 
     return slopes
 
-def asdasd:
-    pass
