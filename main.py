@@ -3,8 +3,6 @@ import Measurements
 from pathlib import Path
 
 
-def asdasd:
-    pass
 def s_ac(u_a, u_s, f):
     w = 2 * np.pi * f
     # w = f
@@ -28,10 +26,11 @@ def s_ph(u_a, u_s, f):
 
 
 measurementPath = Path("")
-measurement = Measurements.DualSlopePhantomMeasurement(location=measurementPath)
-# print(measurement.phases[0:3])
-print()
-print()
-print()
-print(measurement.amplitudes_685)
+measurement1 = Measurements.DualSlopePhantomMeasurement(location=measurementPath, common='detector')
+measurement2 = Measurements.DualSlopePhantomMeasurement(location=measurementPath, common='source')
+
+print(measurement1.amplitude_pairs[0])
+print('--------------')
+print(measurement2.amplitude_pairs[0])
+print('--------------')
 
