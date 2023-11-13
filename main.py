@@ -26,7 +26,7 @@ def s_ph(u_a, u_s, f):
     return temp**0.5
 
 
-measurementPath = Path("")
+measurementPath = Path("2023-11-06", "DUAL-SLOPE-830-3", "5")
 measurement1 = Measurements.DualSlopePhantomMeasurement(location=measurementPath,
                                                         common='detector')
 measurement2 = Measurements.DualSlopePhantomMeasurement(location=measurementPath,
@@ -34,7 +34,7 @@ measurement2 = Measurements.DualSlopePhantomMeasurement(location=measurementPath
 
 print(measurement1.phase_slopes[:, 1].mean(axis=1)[23])
 print('------------------------------')
-print(fdNIRS.compute_optical_parameters(measurement1.dual_amplitude_slopes_color2,
-                                        measurement1.dual_phase_slopes_color2,
+print(fdNIRS.compute_optical_parameters(measurement1.dual_amplitude_slopes_color1,
+                                        measurement1.dual_phase_slopes_color1,
                                         measurement1.modulation_frequency)[:, 0])
 print('------------------------------')

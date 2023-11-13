@@ -19,7 +19,8 @@ class FDNIRSMeasurement:
             self.measurement_details = json.load(f)
         self.measurement_type = self.measurement_details["Measurement type"]
         self.measurement_method = self.measurement_details["Measurement method"]
-        self.modulation_frequency = self.measurement_details["RF"] * 1e6 + self.measurement_details["IF"] * 1e3
+        self.modulation_frequency = (float(self.measurement_details["RF"]) * 1e6 +
+                                     float(self.measurement_details["IF"]) * 1e3)
         self.separations = np.array([self.measurement_details["Separations"]]).reshape(-1, 2)
 
         if self.measurement_type == "Phantom":
