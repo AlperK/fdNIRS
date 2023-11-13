@@ -55,3 +55,21 @@ def get_slopes(absorption_coefficient, scattering_coefficient, frequency):
 
     return slopes
 
+
+def compute_optical_parameters(amplitude_slopes,
+                               phase_slopes,
+                               modulation_frequency):
+    w = 2 * np.pi * modulation_frequency
+    n = 1.4
+    c = 2.998e11
+
+    absorption_coefficient = ((w / (2 * (c / n))) *
+                              (
+                                      np.divide(phase_slopes, amplitude_slopes) -
+                                      np.divide(amplitude_slopes, phase_slopes)
+                              )
+                              )
+
+    scattering_coefficient = ((np.square(amplitude_slopes) - np.square(phase_slopes)) /
+                              (3 * absorption_coefficient))
+    return np.array([absorption_coefficient, scattering_coefficient])

@@ -1,4 +1,5 @@
 from Phantom import Phantom
+import fdNIRS
 import json
 import numpy as np
 from pathlib import Path
@@ -38,7 +39,18 @@ class DualSlopePhantomMeasurement(PhantomMeasurement):
 
         self.common = common
         self.data = FDNIRSData(measurement=self)
-        self.phase_slopes = self.get_phase_slopes()
+
+        self.phase_slopes = np.deg2rad(self.get_phase_slopes())
+        self.phase_slopes_color1 = self.phase_slopes[:, 0]
+        self.dual_phase_slopes_color1 = self.phase_slopes[:, 0].mean(axis=1)
+        self.phase_slopes_color2 = self.phase_slopes[:, 1]
+        self.dual_phase_slopes_color2 = self.phase_slopes[:, 1].mean(axis=1)
+
+        self.amplitude_slopes = self.get_amplitude_slopes()
+        self.amplitude_slopes_color1 = self.amplitude_slopes[:, 0]
+        self.dual_amplitude_slopes_color1 = self.amplitude_slopes[:, 0].mean(axis=1)
+        self.amplitude_slopes_color2 = self.amplitude_slopes[:, 1]
+        self.dual_amplitude_slopes_color2 = self.amplitude_slopes[:, 1].mean(axis=1)
 
     def load_measurement_data(self):
         """

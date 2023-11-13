@@ -1,5 +1,6 @@
 import numpy as np
 import Measurements
+import fdNIRS
 from pathlib import Path
 
 
@@ -26,8 +27,14 @@ def s_ph(u_a, u_s, f):
 
 
 measurementPath = Path("")
-measurement1 = Measurements.DualSlopePhantomMeasurement(location=measurementPath, common='detector')
-measurement2 = Measurements.DualSlopePhantomMeasurement(location=measurementPath, common='source')
+measurement1 = Measurements.DualSlopePhantomMeasurement(location=measurementPath,
+                                                        common='detector')
+measurement2 = Measurements.DualSlopePhantomMeasurement(location=measurementPath,
+                                                        common='source')
 
-
-
+print(measurement1.phase_slopes[:, 1].mean(axis=1)[23])
+print('------------------------------')
+print(fdNIRS.compute_optical_parameters(measurement1.dual_amplitude_slopes_color2,
+                                        measurement1.dual_phase_slopes_color2,
+                                        measurement1.modulation_frequency)[:, 0])
+print('------------------------------')
