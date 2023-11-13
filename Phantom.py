@@ -65,9 +65,9 @@ class Phantom:
 
     def get_slopes(self, frequency, wavelength):
 
-        slopes = np.round(fdNIRS.get_slopes(absorption_coefficient=getattr(self, f"absorption_{wavelength}"),
-                                            scattering_coefficient=getattr(self, f"scattering_{wavelength}"),
-                                            frequency=frequency), 4)
+        slopes = np.round(fdNIRS.get_slopes_from_optical_parameters(absorption_coefficient=getattr(self, f"absorption_{wavelength}"),
+                                                                    scattering_coefficient=getattr(self, f"scattering_{wavelength}"),
+                                                                    frequency=frequency), 4)
         self._assign_slopes(slopes, wavelength)
 
         return slopes

@@ -48,7 +48,7 @@ def _slope_equations(s, *data):
     return eq1 - absorption, eq2 - scattering
 
 
-def get_slopes(absorption_coefficient, scattering_coefficient, frequency):
+def get_slopes_from_optical_parameters(absorption_coefficient, scattering_coefficient, frequency):
     slopes = fsolve(_slope_equations,
                     np.array([-0.1, 0.1]),
                     args=(frequency, absorption_coefficient, scattering_coefficient))
