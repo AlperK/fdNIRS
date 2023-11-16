@@ -56,20 +56,51 @@ def get_slopes_from_optical_parameters(absorption_coefficient, scattering_coeffi
     return slopes
 
 
-def compute_optical_parameters(amplitude_slopes,
-                               phase_slopes,
-                               modulation_frequency):
+def compute_optical_parameters(
+        amplitude_slopes,
+        phase_slopes,
+        modulation_frequency):
+
     w = 2 * np.pi * modulation_frequency
     n = 1.4
     c = 2.998e11
 
-    absorption_coefficient = ((w / (2 * (c / n))) *
-                              (
-                                      np.divide(phase_slopes, amplitude_slopes) -
-                                      np.divide(amplitude_slopes, phase_slopes)
-                              )
-                              )
+    absorption_coefficient = (
+            (w / (2 * (c / n))) *
+            (
+                    np.divide(phase_slopes, amplitude_slopes) -
+                    np.divide(amplitude_slopes, phase_slopes)
+            )
+    )
 
-    scattering_coefficient = ((np.square(amplitude_slopes) - np.square(phase_slopes)) /
-                              (3 * absorption_coefficient))
+    scattering_coefficient = (
+            (np.square(amplitude_slopes) - np.square(phase_slopes)) /
+            (3 * absorption_coefficient)
+    )
     return np.array([absorption_coefficient, scattering_coefficient])
+
+
+def compute_hemoglobin_concentrations(
+        absorption_coefficient_color_830,
+        absorption_coefficient_color_685, ):
+    oxy_hemoglobin_extinction_coefficient_830 = 974.0
+    oxy_hemoglobin_extinction_coefficient_685 = 272.8
+
+    deoxy_hemoglobin_extinction_coefficient_830 = 693.04
+    deoxy_hemoglobin_extinction_coefficient_685 = 2188.24
+
+    oxy_hemoglobin_concentration = (
+            ((absorption_coefficient_color_830 * deoxy_hemoglobin_extinction_coefficient_685) -
+             (absorption_coefficient_color_685 * deoxy_hemoglobin_extinction_coefficient_830)) /
+            ((deoxy_hemoglobin_extinction_coefficient_685 * oxy_hemoglobin_extinction_coefficient_830) -
+             (deoxy_hemoglobin_extinction_coefficient_830 * oxy_hemoglobin_extinction_coefficient_685))
+    )
+
+    deoxy_hemoglobin_concentration = (
+        ((absorption_coefficient_color_685 * oxy_hemoglobin_extinction_coefficient_830) -
+         (absorption_coefficient_color_830 * oxy_hemoglobin_extinction_coefficient_685)) /
+        ((oxy_hemoglobin_extinction_coefficient_830 * deoxy_hemoglobin_extinction_coefficient_685) -
+         (oxy_hemoglobin_extinction_coefficient_685 * deoxy_hemoglobin_extinction_coefficient_830))
+    )
+
+    return np.array([oxy_hemoglobin_concentration, deoxy_hemoglobin_concentration])
