@@ -4,7 +4,7 @@ import numpy as np
 from datetime import datetime
 
 
-loc = Path('DUAL-SLOPE-830-3', '3', 'times.txt')
+loc = Path('2023-11-16', 'DUAL-SLOPE-830-3', '1', 'times.txt')
 timeStamps = np.loadtxt(fname=loc)
 
 deltas = np.diff(timeStamps/8)

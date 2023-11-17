@@ -104,3 +104,15 @@ def compute_hemoglobin_concentrations(
     )
 
     return np.array([oxy_hemoglobin_concentration, deoxy_hemoglobin_concentration])
+
+
+def rolling_apply(fun, a, w):
+    r = np.empty(a.shape)
+    r.fill(np.nan)
+
+    for i in range(w - 1, a.shape[0]):
+        if fun is not None:
+            r[i] = fun(a[(i-w+1):i+1])
+        else:
+            r[i] = a[(i - w + 1):i + 1]
+    return r
