@@ -83,11 +83,11 @@ def compute_optical_parameters(
 def compute_hemoglobin_concentrations(
         absorption_coefficient_color_830,
         absorption_coefficient_color_685, ):
-    oxy_hemoglobin_extinction_coefficient_830 = 974.0
-    oxy_hemoglobin_extinction_coefficient_685 = 272.8
+    oxy_hemoglobin_extinction_coefficient_830 = 974.0 / 10
+    oxy_hemoglobin_extinction_coefficient_685 = 272.8 / 10
 
-    deoxy_hemoglobin_extinction_coefficient_830 = 693.04
-    deoxy_hemoglobin_extinction_coefficient_685 = 2188.24
+    deoxy_hemoglobin_extinction_coefficient_830 = 693.04 / 10
+    deoxy_hemoglobin_extinction_coefficient_685 = 2188.24 / 10
 
     oxy_hemoglobin_concentration = (
             ((absorption_coefficient_color_830 * deoxy_hemoglobin_extinction_coefficient_685) -

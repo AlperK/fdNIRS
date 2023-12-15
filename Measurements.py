@@ -67,9 +67,11 @@ class DualSlopePhantomMeasurement(PhantomMeasurement):
         return np.divide(np.diff(self.data.phases),
                          np.diff(self.separations))
 
-    def _get_linearized_amplitudes(self):
+    def _get_linearized_amplitudes(self, separations=None):
+        if separations is None:
+            separations = self.separations
         squared = (self.data.amplitudes *
-                   self.separations**2)
+                   separations**2)
         return np.log(squared)
 
     def get_amplitude_slopes(self):
