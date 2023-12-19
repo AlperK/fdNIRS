@@ -1,5 +1,25 @@
+#TODO Phantom measurement
+import json
+import pathlib
+
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import fsolve
+from pathlib import Path
+
+
+class fdNIRSData:
+    def __init__(self, location):
+        self.amplitude_slopes = None
+        self.phase_slopes = None
+        self.location = location
+        self.amplitudes, self.phases = self.read_data_from_txt()
+
+    def read_data_from_txt(self):
+        amplitudes = np.loadtxt(Path(self.location, 'amplitude.csv'), delimiter=',')
+        phases = np.loadtxt(Path(self.location, 'phase.csv'), delimiter=',')
+
+        return amplitudes, phases
 
 
 def absorption_coefficient_equation(s_ac, s_ph, f):
@@ -60,7 +80,6 @@ def compute_optical_parameters(
         amplitude_slopes,
         phase_slopes,
         modulation_frequency):
-
     w = 2 * np.pi * modulation_frequency
     n = 1.4
     c = 2.998e11
@@ -97,22 +116,216 @@ def compute_hemoglobin_concentrations(
     )
 
     deoxy_hemoglobin_concentration = (
-        ((absorption_coefficient_color_685 * oxy_hemoglobin_extinction_coefficient_830) -
-         (absorption_coefficient_color_830 * oxy_hemoglobin_extinction_coefficient_685)) /
-        ((oxy_hemoglobin_extinction_coefficient_830 * deoxy_hemoglobin_extinction_coefficient_685) -
-         (oxy_hemoglobin_extinction_coefficient_685 * deoxy_hemoglobin_extinction_coefficient_830))
+            ((absorption_coefficient_color_685 * oxy_hemoglobin_extinction_coefficient_830) -
+             (absorption_coefficient_color_830 * oxy_hemoglobin_extinction_coefficient_685)) /
+            ((oxy_hemoglobin_extinction_coefficient_830 * deoxy_hemoglobin_extinction_coefficient_685) -
+             (oxy_hemoglobin_extinction_coefficient_685 * deoxy_hemoglobin_extinction_coefficient_830))
     )
 
     return np.array([oxy_hemoglobin_concentration, deoxy_hemoglobin_concentration])
 
 
 def rolling_apply(fun, a, w):
-    r = np.empty(a.shape)
-    r.fill(np.nan)
+    if not w is None:
+        r = np.empty(a.shape)
+        r.fill(np.nan)
 
-    for i in range(w - 1, a.shape[0]):
-        if fun is not None:
-            r[i] = fun(a[(i-w+1):i+1])
-        else:
-            r[i] = a[(i - w + 1):i + 1]
-    return r
+        for i in range(w - 1, a.shape[0]):
+            if fun is not None:
+                r[i] = fun(a[(i - w + 1):i + 1])
+            else:
+                r[i] = a[(i - w + 1):i + 1]
+        return r
+    else:
+        return a
+
+
+class fdNIRS:
+
+    def __init__(self, location):
+        self.total_hemoglobin_concentration = None
+        self.oxy_hemoglobin_concentration = None
+        self.deoxy_hemoglobin_concentration = None
+        self.location = location
+        self.amplitudes, self.phases = self.read_data_from_txt()
+        self.settings = self.read_measurement_settings()
+        self.separations = np.array(self.settings['Separations'])
+        self.modulation_frequency = float(self.settings['RF']) * 1e6
+
+        self.absorption_coefficient_wavelength_1 = None
+        self.absorption_coefficient_wavelength_2 = None
+        self.scattering_coefficient_wavelength_1 = None
+        self.scattering_coefficient_wavelength_2 = None
+
+    def read_data_from_txt(self):
+        amplitudes = np.loadtxt(Path(self.location, 'amplitude.csv'), delimiter=',')
+        phases = np.loadtxt(Path(self.location, 'phase.csv'), delimiter=',')
+
+        return amplitudes, phases
+
+    def read_measurement_settings(self):
+        with open(Path(self.location, 'measurement settings.json')) as f:
+            settings = json.load(f)
+        return settings
+
+    def linearize_amplitudes(self, data: fdNIRSData):
+        squared = data.amplitudes * self.separations ** 2
+        return np.log(squared)
+
+    def get_slopes(self, data: fdNIRSData):
+        data.amplitude_slopes = np.divide(np.diff(self.linearize_amplitudes(data)),
+                                          np.diff(self.separations))
+        data.phase_slopes = np.divide(np.diff(np.deg2rad(data.phases)),
+                                      np.diff(self.separations))
+
+    def compute_optical_parameters(self, amplitude_slope, phase_slope):
+        w = 2 * np.pi * self.modulation_frequency
+        n = 1.4
+        c = 2.998e11
+
+        absorption_coefficient = (
+                (w / (2 * (c / n))) *
+                (
+                        np.divide(phase_slope, amplitude_slope) -
+                        np.divide(amplitude_slope, phase_slope)
+                )
+        )
+
+        scattering_coefficient = (
+                (np.square(amplitude_slope) - np.square(phase_slope)) /
+                (3 * absorption_coefficient)
+        )
+        return np.array([absorption_coefficient, scattering_coefficient])
+
+    def compute_hemoglobin_concentrations(self):
+        oxy_hemoglobin_extinction_coefficient_830 = 974.0 / 10
+        oxy_hemoglobin_extinction_coefficient_685 = 272.8 / 10
+
+        deoxy_hemoglobin_extinction_coefficient_830 = 693.04 / 10
+        deoxy_hemoglobin_extinction_coefficient_685 = 2188.24 / 10
+
+        self.oxy_hemoglobin_concentration = (
+                                                    ((
+                                                             self.absorption_coefficient_wavelength_1 * deoxy_hemoglobin_extinction_coefficient_685) -
+                                                     (
+                                                             self.absorption_coefficient_wavelength_2 * deoxy_hemoglobin_extinction_coefficient_830)) /
+                                                    ((
+                                                             deoxy_hemoglobin_extinction_coefficient_685 * oxy_hemoglobin_extinction_coefficient_830) -
+                                                     (
+                                                             deoxy_hemoglobin_extinction_coefficient_830 * oxy_hemoglobin_extinction_coefficient_685))
+                                            ) * 1e6
+
+        self.deoxy_hemoglobin_concentration = (
+                                                      ((
+                                                               self.absorption_coefficient_wavelength_2 * oxy_hemoglobin_extinction_coefficient_830) -
+                                                       (
+                                                               self.absorption_coefficient_wavelength_1 * oxy_hemoglobin_extinction_coefficient_685)) /
+                                                      ((
+                                                               oxy_hemoglobin_extinction_coefficient_830 * deoxy_hemoglobin_extinction_coefficient_685) -
+                                                       (
+                                                               oxy_hemoglobin_extinction_coefficient_685 * deoxy_hemoglobin_extinction_coefficient_830))
+                                              ) * 1e6
+
+        self.total_hemoglobin_concentration = self.oxy_hemoglobin_concentration + self.deoxy_hemoglobin_concentration
+
+    def plot_occlusion(self, name: str, total_time, occlusion_interval, window_size=None):
+
+        oxy = rolling_apply(np.mean, self.oxy_hemoglobin_concentration, window_size)
+        deoxy = rolling_apply(np.mean, self.deoxy_hemoglobin_concentration, window_size)
+        total = oxy + deoxy
+
+        t = np.linspace(0, total_time, self.oxy_hemoglobin_concentration.size)
+        plt.figure(f'{name} occlusion')
+        plt.plot(t, oxy, color='red', alpha=0.35, linewidth=3, label='Oxy')
+        plt.plot(t, deoxy, color='blue', alpha=0.35, linewidth=3, label='Deoxy')
+        plt.plot(t, total, color='black', alpha=0.35, linewidth=3, label='Total')
+        plt.axvspan(occlusion_interval[0], occlusion_interval[1], color='green', alpha=0.15, label=f'{name} occlusion')
+
+        plt.legend()
+        plt.title(f'{name} occlusion')
+        plt.xlabel(f'Time(s)')
+        plt.ylabel(r'$\mu M$')
+        plt.tight_layout()
+
+    def plot_raw(self, total_time, occlusion_interval=(0, 0), window_size=None):
+        t = np.linspace(0, total_time, self.amplitudes[:, 1].size)
+        fig = plt.figure('Raw Data', figsize=(12, 8), layout='constrained')
+        fig.suptitle(f'Raw Amplitude and Phase data')
+        subfig = fig.subfigures(1, 2)
+
+        subfig[0].suptitle(f'For 830nm')
+
+        axes = subfig[0].subplots(4, 2)
+        for i in range(4):
+            ax = axes[i][0]
+            ax.plot(t, rolling_apply(np.mean, self.amplitudes[:, i], window_size))
+            ax.axvspan(occlusion_interval[0], occlusion_interval[1], color='green', alpha=0.15)
+            ax.set_title(f'{self.separations.ravel()[i]}mm separation, Pair {i % 2+1}')
+            ax.set_ylabel('mV')
+            ax.set_xlabel('Time(s)')
+
+            ax = axes[i][1]
+            ax.plot(t, rolling_apply(np.mean, self.phases[:, i], window_size))
+            ax.axvspan(occlusion_interval[0], occlusion_interval[1], color='green', alpha=0.15)
+            ax.set_title(f'{self.separations.ravel()[i]}mm separation, Pair {i % 2+1}')
+            ax.set_ylabel('Degrees')
+            ax.set_xlabel('Time(s)')
+
+        subfig[1].suptitle(f'For 690nm')
+        axes = subfig[1].subplots(4, 2)
+        for i in range(4):
+            ax = axes[i][0]
+            ax.plot(t, rolling_apply(np.mean, self.amplitudes[:, i + 4], window_size))
+            ax.axvspan(occlusion_interval[0], occlusion_interval[1], color='green', alpha=0.15)
+            ax.set_title(f'{self.separations.ravel()[i + 4]}mm separation, Pair {i % 2+1}')
+            ax.set_ylabel('mV')
+            ax.set_xlabel('Time(s)')
+
+            ax = axes[i][1]
+            ax.plot(t, rolling_apply(np.mean, self.phases[:, i + 4], window_size))
+            ax.axvspan(occlusion_interval[0], occlusion_interval[1], color='green', alpha=0.15)
+            ax.set_title(f'{self.separations.ravel()[i + 4]}mm separation, Pair {i % 2+1}')
+            ax.set_ylabel('Degrees')
+            ax.set_xlabel('Time(s)')
+
+        # plt.tight_layout()
+
+
+class DualSlopeMeasurement(fdNIRS):
+    def __init__(self, common='detector', *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.common = common
+        self.data = fdNIRSData(self.location)
+        self.reshape_data()
+        self.get_slopes(self.data)
+
+        self.amplitude_slopes_wavelength_1 = self.data.amplitude_slopes[:, 0, :]
+        self.amplitude_slopes_wavelength_2 = self.data.amplitude_slopes[:, 1, :]
+        self.amplitude_dual_slope_wavelength_1 = np.mean(self.amplitude_slopes_wavelength_1, axis=1)
+        self.amplitude_dual_slope_wavelength_2 = np.mean(self.amplitude_slopes_wavelength_2, axis=1)
+
+        self.phase_slopes_wavelength_1 = self.data.phase_slopes[:, 0, :]
+        self.phase_slopes_wavelength_2 = self.data.phase_slopes[:, 1, :]
+        self.phase_dual_slope_wavelength_1 = np.mean(self.phase_slopes_wavelength_1, axis=1)
+        self.phase_dual_slope_wavelength_2 = np.mean(self.phase_slopes_wavelength_2, axis=1)
+
+        (self.absorption_coefficient_wavelength_1,
+         self.scattering_coefficient_wavelength_1) = self.compute_optical_parameters(
+            self.amplitude_dual_slope_wavelength_1,
+            self.phase_dual_slope_wavelength_1)
+
+        (self.absorption_coefficient_wavelength_2,
+         self.scattering_coefficient_wavelength_2) = self.compute_optical_parameters(
+            self.amplitude_dual_slope_wavelength_2,
+            self.phase_dual_slope_wavelength_2)
+
+    def reshape_data(self):
+        if self.common == 'detector':
+            self.data.amplitudes = (
+                self.data.amplitudes.reshape(self.data.amplitudes.shape[0], 2, 2, 2))
+            self.data.phases = (
+                self.data.phases.reshape(self.data.phases.shape[0], 2, 2, 2))
+
+        elif self.common == 'source':
+            self.data.amplitudes = self.data.amplitudes.reshape(self.data.amplitudes.shape[0], 2, 2, 2).swapaxes(2, 3)
+            self.data.phases = self.data.phases.reshape(self.data.phases.shape[0], 2, 2, 2).swapaxes(2, 3)
