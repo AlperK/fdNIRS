@@ -27,7 +27,7 @@ def s_ph(u_a, u_s, f):
     return temp**0.5
 
 
-measurementPath = Path("2023-12-14", "AO-5-3-2", '10')
+measurementPath = Path("2023-12-14", "AO-5-3-2", '2')
 measurement1 = Measurements.DualSlopePhantomMeasurement(location=measurementPath,
                                                         common='detector')
 measurement2 = Measurements.DualSlopePhantomMeasurement(location=measurementPath,
@@ -67,8 +67,8 @@ absorption_coefficient_685 = fdNIRS.rolling_apply(np.mean, a=absorption_coeffici
 absorption_coefficient_830 = np.loadtxt(Path.joinpath(measurementPath, '830nm-absorption.txt'))
 absorption_coefficient_685 = np.loadtxt(Path.joinpath(measurementPath, '690nm-absorption.txt'))
 
-absorption_coefficient_830 = fdNIRS.rolling_apply(np.mean, a=absorption_coefficient_830, w=1)
-absorption_coefficient_685 = fdNIRS.rolling_apply(np.mean, a=absorption_coefficient_685, w=1)
+absorption_coefficient_830 = fdNIRS.rolling_apply(np.mean, a=absorption_coefficient_830, w=3)
+absorption_coefficient_685 = fdNIRS.rolling_apply(np.mean, a=absorption_coefficient_685, w=3)
 HbO, HbR = fdNIRS.compute_hemoglobin_concentrations(absorption_coefficient_830,
                                                     absorption_coefficient_685)
 # print(fdNIRS.compute_hemoglobin_concentrations(absorption_coefficient_830,
