@@ -260,14 +260,14 @@ class fdNIRS:
             ax = axes[i][0]
             ax.plot(t, rolling_apply(np.mean, self.amplitudes[:, i], window_size))
             ax.axvspan(occlusion_interval[0], occlusion_interval[1], color='green', alpha=0.15)
-            ax.set_title(f'{self.separations.ravel()[i]}mm separation, Pair {i % 2+1}')
+            ax.set_title(f'{self.separations.ravel()[i]}mm separation, Pair {i//2 + 1}')
             ax.set_ylabel('mV')
             ax.set_xlabel('Time(s)')
 
             ax = axes[i][1]
             ax.plot(t, rolling_apply(np.mean, self.phases[:, i], window_size))
             ax.axvspan(occlusion_interval[0], occlusion_interval[1], color='green', alpha=0.15)
-            ax.set_title(f'{self.separations.ravel()[i]}mm separation, Pair {i % 2+1}')
+            ax.set_title(f'{self.separations.ravel()[i]}mm separation, Pair {i//2 + 1}')
             ax.set_ylabel('Degrees')
             ax.set_xlabel('Time(s)')
 
@@ -277,18 +277,19 @@ class fdNIRS:
             ax = axes[i][0]
             ax.plot(t, rolling_apply(np.mean, self.amplitudes[:, i + 4], window_size))
             ax.axvspan(occlusion_interval[0], occlusion_interval[1], color='green', alpha=0.15)
-            ax.set_title(f'{self.separations.ravel()[i + 4]}mm separation, Pair {i % 2+1}')
+            ax.set_title(f'{self.separations.ravel()[i + 4]}mm separation, Pair {i//2 + 1}')
             ax.set_ylabel('mV')
             ax.set_xlabel('Time(s)')
 
             ax = axes[i][1]
             ax.plot(t, rolling_apply(np.mean, self.phases[:, i + 4], window_size))
             ax.axvspan(occlusion_interval[0], occlusion_interval[1], color='green', alpha=0.15)
-            ax.set_title(f'{self.separations.ravel()[i + 4]}mm separation, Pair {i % 2+1}')
+            ax.set_title(f'{self.separations.ravel()[i + 4]}mm separation, Pair {i//2 + 1}')
             ax.set_ylabel('Degrees')
             ax.set_xlabel('Time(s)')
 
         # plt.tight_layout()
+
 
 
 class DualSlopeMeasurement(fdNIRS):
@@ -329,3 +330,61 @@ class DualSlopeMeasurement(fdNIRS):
         elif self.common == 'source':
             self.data.amplitudes = self.data.amplitudes.reshape(self.data.amplitudes.shape[0], 2, 2, 2).swapaxes(2, 3)
             self.data.phases = self.data.phases.reshape(self.data.phases.shape[0], 2, 2, 2).swapaxes(2, 3)
+
+    def plot_slopes(self, total_time, occlusion_interval=None, window_size=None):
+
+        t = np.linspace(0, total_time, self.data.amplitude_slopes[:, 0, 0].size)
+        fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(12, 8))
+
+        ax = axes[0][0]
+        ax.set_title('Amplitude Slopes - 830nm')
+        ax.plot(t, rolling_apply(np.mean, self.data.amplitude_slopes[:, 0, 0], window_size),
+                linewidth=2, alpha=0.75, label='Pair 1', color='red')
+        ax.plot(t, rolling_apply(np.mean, self.data.amplitude_slopes[:, 0, 1], window_size),
+                linewidth=2, alpha=0.75, label='Pair 2', color='blue')
+        ax.plot(t, rolling_apply(np.mean, self.amplitude_dual_slope_wavelength_1, window_size),
+                linewidth=2, alpha=0.75, label='Dual', color='black')
+        ax.set_xlabel('Time (s)')
+        ax.set_ylabel('1/mm')
+
+        ax = axes[1][0]
+        ax.set_title('Phase Slopes - 830nm')
+        ax.plot(t, np.rad2deg(rolling_apply(np.mean, self.data.phase_slopes[:, 0, 0], window_size)),
+                linewidth=2, alpha=0.75, label='Pair 1', color='red')
+        ax.plot(t, np.rad2deg(rolling_apply(np.mean, self.data.phase_slopes[:, 0, 1], window_size)),
+                linewidth=2, alpha=0.75, label='Pair 2', color='blue')
+        ax.plot(t, np.rad2deg(rolling_apply(np.mean, self.phase_dual_slope_wavelength_1, window_size)),
+                linewidth=2, alpha=0.75, label='Dual', color='black')
+        ax.set_xlabel('Time (s)')
+        ax.set_ylabel('Degrees/mm(°)')
+
+        ax = axes[0][1]
+        ax.set_title('Amplitude Slopes - 690nm')
+        ax.plot(t, rolling_apply(np.mean, self.data.amplitude_slopes[:, 1, 0], window_size),
+                linewidth=2, alpha=0.75, label='Pair 1', color='red')
+        ax.plot(t, rolling_apply(np.mean, self.data.amplitude_slopes[:, 1, 1], window_size),
+                linewidth=2, alpha=0.75, label='Pair 2', color='blue')
+        ax.plot(t, rolling_apply(np.mean, self.amplitude_dual_slope_wavelength_2, window_size),
+                linewidth=2, alpha=0.75, label='Dual', color='black')
+        ax.set_xlabel('Time (s)')
+        ax.set_ylabel('1/mm')
+
+        ax = axes[1][1]
+        ax.set_title('Phase Slopes - 690nm')
+        ax.plot(t, np.rad2deg(rolling_apply(np.mean, self.data.phase_slopes[:, 1, 0], window_size)),
+                linewidth=2, alpha=0.75, label='Pair 1', color='red')
+        ax.plot(t, np.rad2deg(rolling_apply(np.mean, self.data.phase_slopes[:, 1, 1], window_size)),
+                linewidth=2, alpha=0.75, label='Pair 2', color='blue')
+        ax.plot(t, np.rad2deg(rolling_apply(np.mean, self.phase_dual_slope_wavelength_2, window_size)),
+                linewidth=2, alpha=0.75, label='Dual', color='black')
+        ax.set_xlabel('Time (s)')
+        ax.set_ylabel('Degrees/mm(°)')
+
+        if occlusion_interval is not None:
+            for i in range(2):
+                for j in range(2):
+                    axes[i][j].axvspan(occlusion_interval[0], occlusion_interval[1],
+                                     alpha=0.15, label='Occlusion', color='green')
+
+        plt.legend()
+        plt.tight_layout()

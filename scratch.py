@@ -16,4 +16,7 @@ measurement.plot_occlusion('Arterial',
                            occlusion_interval=(300, 480),
                            window_size=15)
 measurement.plot_raw(total_time=600, occlusion_interval=(300, 480), window_size=10)
+measurement.plot_slopes(total_time=10*60,
+                        occlusion_interval=(300, 480),
+                        window_size=5)
 plt.show()
