@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 
 
-location = Path('2023-12-20', 'AO-5-3-2', '9')
+location = Path('2023-12-21', 'AO-5-3-2', '7')
 measurement = fdNIRS.DualSlopeMeasurement(location=location)
 measurement.compute_hemoglobin_concentrations()
 
