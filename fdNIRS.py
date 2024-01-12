@@ -290,7 +290,22 @@ class fdNIRS:
 
         # plt.tight_layout()
 
+    def plot_absorption(self, total_time, occlusion_interval=(0, 0), window_size=None):
+        absoprtion_830 = rolling_apply(np.mean, self.absorption_coefficient_wavelength_1, window_size)
+        absoprtion_690 = rolling_apply(np.mean, self.absorption_coefficient_wavelength_2, window_size)
+        # total = oxy + deoxy
 
+        t = np.linspace(0, total_time, absoprtion_830.size)
+        plt.figure(f'Absorption coefficients')
+        plt.plot(t, absoprtion_830, color='blue', alpha=0.35, linewidth=3, label='830nm')
+        plt.plot(t, absoprtion_690, color='red', alpha=0.35, linewidth=3, label='690nm')
+        plt.axvspan(occlusion_interval[0], occlusion_interval[1], color='green', alpha=0.15, label=f'Occlusion')
+
+        plt.legend()
+        plt.title(f'Absorption Coefficients')
+        plt.xlabel(f'Time(s)')
+        plt.ylabel(r'1/mm$')
+        plt.tight_layout()
 
 class DualSlopeMeasurement(fdNIRS):
     def __init__(self, common='detector', *args, **kwargs):

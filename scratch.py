@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 
 
-location = Path('2024-01-09', 'AO-5-3-2', '8')
+location = Path('2024-01-12', 'AO-5-3-2', '3')
 measurement = fdNIRS.DualSlopeMeasurement(location=location)
 measurement.compute_hemoglobin_concentrations()
 
@@ -19,4 +19,7 @@ measurement.plot_raw(total_time=600, occlusion_interval=(300, 480), window_size=
 measurement.plot_slopes(total_time=10*60,
                         occlusion_interval=(300, 480),
                         window_size=5)
+measurement.plot_absorption(total_time=10*60,
+                            occlusion_interval=(300, 480),
+                            window_size=5)
 plt.show()
