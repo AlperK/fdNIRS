@@ -1,10 +1,11 @@
 #TODO Phantom measurement
 import json
-import pathlib
-
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import fsolve
+from scipy.fft import fft, fftfreq
+from scipy.signal.windows import blackman
+from scipy import signal
 from pathlib import Path
 
 
@@ -140,6 +141,64 @@ def rolling_apply(fun, a, w):
         return a
 
 
+def apply_kalman_1d(initial_estimate,
+                    initial_error_estimate,
+                    error_in_measurement,
+                    meas):
+    initial_kalman_gain = initial_error_estimate / (initial_error_estimate + error_in_measurement)
+    previous_estimate = initial_estimate
+    previous_error_estimate = initial_error_estimate
+    kalman_gain = initial_kalman_gain
+
+    estimates = np.array([])
+
+    for mea in meas:
+        if np.isnan(mea) == False:
+            # print(mea)
+            current_estimate = previous_estimate + kalman_gain * (mea - previous_estimate)
+            estimates = np.append(estimates, [current_estimate])
+            # print(f'currentEstimate = {current_estimate}')
+            # print(estimates)
+            current_error_estimate = (1 - kalman_gain) * previous_error_estimate
+            # print(f'currentErrorEstimate = {current_error_estimate}')
+
+            kalman_gain = current_error_estimate / (current_error_estimate + error_in_measurement)
+            # print(f'kalmanGain = {kalman_gain}')
+            previous_estimate = current_estimate
+
+    return estimates
+
+
+def plot_fft(y):
+    y = y - np.mean(y)
+    N = np.size(y)
+    T = 600 / N
+    w = blackman(N)
+    yf = fft(y*w)
+    xf = fftfreq(N, T)[:N//2]
+
+    plt.figure()
+    plt.plot(xf, 2.0/N * np.abs(yf[0:N//2]))
+    plt.grid()
+
+
+def apply_butterworth(y):
+    plot_fft(y)
+    m = np.mean(y)
+    N = np.size(y)
+    T = N / 600
+
+    sos = signal.butter(14, [0.01, 0.02], fs=N/600, btype='bandstop', output='sos')
+    filtered = signal.sosfilt(sos, y-m)
+    # sos = signal.butter(14, [0.2, 0.25], fs=N/600, btype='bandstop', output='sos')
+    # filtered = signal.sosfilt(sos, filtered)
+    plot_fft(filtered)
+
+    b, a = signal.butter(3, 0.015)
+    filtered = signal.filtfilt(b, a, y-m)
+    return filtered + m
+
+
 class fdNIRS:
 
     def __init__(self, location):
@@ -179,6 +238,16 @@ class fdNIRS:
                                       np.diff(self.separations))
 
     def compute_optical_parameters(self, amplitude_slope, phase_slope):
+        y = phase_slope
+        y = np.ravel(y)
+        amplitude_slope = np.ravel(amplitude_slope)
+        m = np.mean(phase_slope)
+        b, a = signal.butter(1, .045)
+        # print(np.ravel(y))
+        filtered = signal.filtfilt(b, a, y - m) + m
+        phase_slope = filtered
+        print(filtered.shape)
+
         w = 2 * np.pi * self.modulation_frequency
         n = 1.4
         c = 2.998e11
@@ -190,7 +259,7 @@ class fdNIRS:
                         np.divide(amplitude_slope, phase_slope)
                 )
         )
-
+        print(absorption_coefficient.shape)
         scattering_coefficient = (
                 (np.square(amplitude_slope) - np.square(phase_slope)) /
                 (3 * absorption_coefficient)
@@ -282,7 +351,13 @@ class fdNIRS:
             ax.set_xlabel('Time(s)')
 
             ax = axes[i][1]
+            # x = rolling_apply(np.mean, self.phases[:, i + 4], window_size)
+            x = self.phases[:, i + 4]
+            filtered = apply_butterworth(x)
+            x = apply_kalman_1d(x[0], 1, 50, x)
             ax.plot(t, rolling_apply(np.mean, self.phases[:, i + 4], window_size))
+            # ax.plot(t, x, color='red')
+            ax.plot(t, filtered, color='red', alpha=0.5)
             ax.axvspan(occlusion_interval[0], occlusion_interval[1], color='green', alpha=0.15)
             ax.set_title(f'{self.separations.ravel()[i + 4]}mm separation, Pair {i//2 + 1}')
             ax.set_ylabel('Degrees')
@@ -306,6 +381,7 @@ class fdNIRS:
         plt.xlabel(f'Time(s)')
         plt.ylabel(r'1/mm$')
         plt.tight_layout()
+
 
 class DualSlopeMeasurement(fdNIRS):
     def __init__(self, common='detector', *args, **kwargs):
