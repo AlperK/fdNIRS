@@ -240,13 +240,13 @@ class fdNIRS:
     def compute_optical_parameters(self, amplitude_slope, phase_slope):
         y = phase_slope
         y = np.ravel(y)
-        amplitude_slope = np.ravel(amplitude_slope)
+        # amplitude_slope = np.ravel(amplitude_slope)
         m = np.mean(phase_slope)
         b, a = signal.butter(1, .045)
         # print(np.ravel(y))
         filtered = signal.filtfilt(b, a, y - m) + m
-        phase_slope = filtered
-        print(filtered.shape)
+        # phase_slope = filtered
+        # print(filtered.shape)
 
         w = 2 * np.pi * self.modulation_frequency
         n = 1.4
@@ -357,7 +357,7 @@ class fdNIRS:
             x = apply_kalman_1d(x[0], 1, 50, x)
             ax.plot(t, rolling_apply(np.mean, self.phases[:, i + 4], window_size))
             # ax.plot(t, x, color='red')
-            ax.plot(t, filtered, color='red', alpha=0.5)
+            # ax.plot(t, filtered, color='red', alpha=0.5)
             ax.axvspan(occlusion_interval[0], occlusion_interval[1], color='green', alpha=0.15)
             ax.set_title(f'{self.separations.ravel()[i + 4]}mm separation, Pair {i//2 + 1}')
             ax.set_ylabel('Degrees')
