@@ -5,14 +5,14 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 
 
-location = Path('2024-03-07', 'DUAL-SLOPE-BOTH', '2')
+location = Path('2024-03-19', 'DUAL-SLOPE-BOTH', '1')
 measurement = fdNIRS.DualSlopeMeasurement(location=location)
 measurement.compute_hemoglobin_concentrations()
 windowSize = 3
 occlusionInterval = None
 totalTime = 60*60
 
-t = np.linspace(0, 10*60, measurement.oxy_hemoglobin_concentration.size)
+t = np.linspace(0, totalTime, measurement.oxy_hemoglobin_concentration.size)
 measurement.plot_occlusion('Arterial',
                            total_time=totalTime,
                            occlusion_interval=occlusionInterval,
