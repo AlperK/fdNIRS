@@ -22,8 +22,8 @@ class fdNIRSData:
         phases = np.loadtxt(Path(self.location, 'phase.csv'), delimiter=',')
 
         for i in range(8):
-            amplitudes[:, i] = savgol_filter(amplitudes[:, i], window_length=15, polyorder=3, mode='nearest')
-            phases[:, i] = savgol_filter(phases[:, i], window_length=15, polyorder=3, mode='nearest')
+            amplitudes[:, i] = savgol_filter(amplitudes[:, i], window_length=5, polyorder=1, mode='nearest')
+            phases[:, i] = savgol_filter(phases[:, i], window_length=5, polyorder=1, mode='nearest')
 
         return amplitudes, phases
 
@@ -224,8 +224,9 @@ class fdNIRS:
     def read_data_from_txt(self):
         amplitudes = np.loadtxt(Path(self.location, 'amplitude.csv'), delimiter=',')
         phases = np.loadtxt(Path(self.location, 'phase.csv'), delimiter=',')
-        # for i in range(8):
-        #     phases[:, i] = savgol_filter(phases[:, i], window_length=105, polyorder=3, deriv=0)
+        for i in range(8):
+            phases[:, i] = savgol_filter(phases[:, i], window_length=5, polyorder=1, mode='nearest')
+            amplitudes[:, i] = savgol_filter(amplitudes[:, i], window_length=5, polyorder=1, mode='nearest')
 
         return amplitudes, phases
 
@@ -281,26 +282,20 @@ class fdNIRS:
         deoxy_hemoglobin_extinction_coefficient_685 = 2188.24 / 10
 
         self.oxy_hemoglobin_concentration = (
-                                                    ((
-                                                             self.absorption_coefficient_wavelength_1 * deoxy_hemoglobin_extinction_coefficient_685) -
-                                                     (
-                                                             self.absorption_coefficient_wavelength_2 * deoxy_hemoglobin_extinction_coefficient_830)) /
-                                                    ((
-                                                             deoxy_hemoglobin_extinction_coefficient_685 * oxy_hemoglobin_extinction_coefficient_830) -
-                                                     (
-                                                             deoxy_hemoglobin_extinction_coefficient_830 * oxy_hemoglobin_extinction_coefficient_685))
-                                            ) * 1e6
+                (
+                        ((self.absorption_coefficient_wavelength_1 * deoxy_hemoglobin_extinction_coefficient_685) -
+                         (self.absorption_coefficient_wavelength_2 * deoxy_hemoglobin_extinction_coefficient_830)) /
+                        ((deoxy_hemoglobin_extinction_coefficient_685 * oxy_hemoglobin_extinction_coefficient_830) -
+                         (deoxy_hemoglobin_extinction_coefficient_830 * oxy_hemoglobin_extinction_coefficient_685))
+                 ) * 1e6)
 
         self.deoxy_hemoglobin_concentration = (
-                                                      ((
-                                                               self.absorption_coefficient_wavelength_2 * oxy_hemoglobin_extinction_coefficient_830) -
-                                                       (
-                                                               self.absorption_coefficient_wavelength_1 * oxy_hemoglobin_extinction_coefficient_685)) /
-                                                      ((
-                                                               oxy_hemoglobin_extinction_coefficient_830 * deoxy_hemoglobin_extinction_coefficient_685) -
-                                                       (
-                                                               oxy_hemoglobin_extinction_coefficient_685 * deoxy_hemoglobin_extinction_coefficient_830))
-                                              ) * 1e6
+                (
+                        ((self.absorption_coefficient_wavelength_2 * oxy_hemoglobin_extinction_coefficient_830) -
+                         (self.absorption_coefficient_wavelength_1 * oxy_hemoglobin_extinction_coefficient_685)) /
+                        ((oxy_hemoglobin_extinction_coefficient_830 * deoxy_hemoglobin_extinction_coefficient_685) -
+                         (oxy_hemoglobin_extinction_coefficient_685 * deoxy_hemoglobin_extinction_coefficient_830))
+                ) * 1e6)
 
         self.total_hemoglobin_concentration = self.oxy_hemoglobin_concentration + self.deoxy_hemoglobin_concentration
 
@@ -345,7 +340,7 @@ class fdNIRS:
 
             ax = axes[i][1]
             ax.plot(t, rolling_apply(np.mean, self.phases[:, i], window_size))
-            ax.plot(t, savgol_filter(self.phases[:, i], window_length=11, polyorder=3, mode='nearest'), color='red')
+            # ax.plot(t, savgol_filter(self.phases[:, i], window_length=11, polyorder=3, mode='nearest'), color='red')
             # ax.axvspan(occlusion_interval[0], occlusion_interval[1], color='green', alpha=0.15)
             ax.set_title(f'{self.separations.ravel()[i]}mm separation, Pair {i//2 + 1}')
             ax.set_ylabel('Degrees')
@@ -368,7 +363,7 @@ class fdNIRS:
             # filtered = apply_butterworth(x)
             x = apply_kalman_1d(x[0], 1, 50, x)
             ax.plot(t, rolling_apply(np.mean, self.phases[:, i + 4], window_size))
-            ax.plot(t, savgol_filter(self.phases[:, i + 4], window_length=11, polyorder=3, mode='nearest'), color='red')
+            # ax.plot(t, savgol_filter(self.phases[:, i + 4], window_length=11, polyorder=3, mode='nearest'), color='red')
             # ax.plot(t, x, color='red')
             # ax.plot(t, filtered, color='red', alpha=0.5)
             # ax.axvspan(occlusion_interval[0], occlusion_interval[1], color='green', alpha=0.15)
@@ -379,14 +374,14 @@ class fdNIRS:
         # plt.tight_layout()
 
     def plot_absorption(self, total_time, occlusion_interval=(0, 0), window_size=None):
-        absoprtion_830 = rolling_apply(np.mean, self.absorption_coefficient_wavelength_1, window_size)
-        absoprtion_690 = rolling_apply(np.mean, self.absorption_coefficient_wavelength_2, window_size)
+        absorption_830 = rolling_apply(np.mean, self.absorption_coefficient_wavelength_1, window_size)
+        absorption_690 = rolling_apply(np.mean, self.absorption_coefficient_wavelength_2, window_size)
         # total = oxy + deoxy
 
-        t = np.linspace(0, total_time, absoprtion_830.size)
+        t = np.linspace(0, total_time, absorption_830.size)
         plt.figure(f'Absorption coefficients')
-        plt.plot(t, absoprtion_830, color='blue', alpha=0.35, linewidth=3, label='830nm')
-        plt.plot(t, absoprtion_690, color='red', alpha=0.35, linewidth=3, label='690nm')
+        plt.plot(t, absorption_830, color='blue', alpha=0.35, linewidth=3, label='830nm')
+        plt.plot(t, absorption_690, color='red', alpha=0.35, linewidth=3, label='690nm')
         plt.axhline(0.0081, color='red', linestyle='dashed', label='Expected-690 nm')
         plt.axhline(0.0077, color='blue', linestyle='dashed', label='Expected-830 nm')
         # plt.axvspan(occlusion_interval[0], occlusion_interval[1], color='green', alpha=0.15, label=f'Occlusion')
@@ -415,6 +410,7 @@ class fdNIRS:
         plt.xlabel(f'Time(s)')
         plt.ylabel(r'1/mm$')
         plt.tight_layout()
+
 
 class DualSlopeMeasurement(fdNIRS):
     def __init__(self, common='detector', *args, **kwargs):
