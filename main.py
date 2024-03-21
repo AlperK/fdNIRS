@@ -27,7 +27,7 @@ def s_ph(u_a, u_s, f):
     return temp**0.5
 
 
-measurementPath = Path("2023-12-14", "AO-5-3-2", '2')
+measurementPath = Path("2023-12-14", "AO-5-4-2", '2')
 measurement1 = Measurements.DualSlopePhantomMeasurement(location=measurementPath,
                                                         common='detector')
 measurement2 = Measurements.DualSlopePhantomMeasurement(location=measurementPath,

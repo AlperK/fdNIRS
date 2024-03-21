@@ -312,7 +312,7 @@ class fdNIRS:
         #          color='black', alpha=0.15, linewidth=3, linestyle='dashed', label='SavGol-Oxy')
         plt.plot(t, deoxy, color='blue', alpha=0.35, linewidth=3, label='Deoxy')
         plt.plot(t, total, color='black', alpha=0.35, linewidth=3, label='Total')
-        # plt.axvspan(occlusion_interval[0], occlusion_interval[1], color='green', alpha=0.15, label=f'{name} occlusion')
+        plt.axvspan(occlusion_interval[0], occlusion_interval[1], color='green', alpha=0.15, label=f'{name} occlusion')
 
         plt.legend()
         plt.title(f'{name} occlusion')
@@ -333,7 +333,7 @@ class fdNIRS:
             ax = axes[i][0]
             ax.plot(t, rolling_apply(np.mean, self.amplitudes[:, i], window_size))
             # ax.plot(t, savgol_filter(self.amplitudes[:, i], window_length=31, polyorder=1), color='red')
-            # ax.axvspan(occlusion_interval[0], occlusion_interval[1], color='green', alpha=0.15)
+            ax.axvspan(occlusion_interval[0], occlusion_interval[1], color='green', alpha=0.15)
             ax.set_title(f'{self.separations.ravel()[i]}mm separation, Pair {i//2 + 1}')
             ax.set_ylabel('mV')
             ax.set_xlabel('Time(s)')
@@ -341,7 +341,7 @@ class fdNIRS:
             ax = axes[i][1]
             ax.plot(t, rolling_apply(np.mean, self.phases[:, i], window_size))
             # ax.plot(t, savgol_filter(self.phases[:, i], window_length=11, polyorder=3, mode='nearest'), color='red')
-            # ax.axvspan(occlusion_interval[0], occlusion_interval[1], color='green', alpha=0.15)
+            ax.axvspan(occlusion_interval[0], occlusion_interval[1], color='green', alpha=0.15)
             ax.set_title(f'{self.separations.ravel()[i]}mm separation, Pair {i//2 + 1}')
             ax.set_ylabel('Degrees')
             ax.set_xlabel('Time(s)')
@@ -352,7 +352,7 @@ class fdNIRS:
             ax = axes[i][0]
             # ax.plot(t, savgol_filter(self.amplitudes[:, i + 4], window_length=31, polyorder=1, mode='mirror'), color='red')
             ax.plot(t, rolling_apply(np.mean, self.amplitudes[:, i + 4], window_size))
-            # ax.axvspan(occlusion_interval[0], occlusion_interval[1], color='green', alpha=0.15)
+            ax.axvspan(occlusion_interval[0], occlusion_interval[1], color='green', alpha=0.15)
             ax.set_title(f'{self.separations.ravel()[i + 4]}mm separation, Pair {i//2 + 1}')
             ax.set_ylabel('mV')
             ax.set_xlabel('Time(s)')
@@ -366,7 +366,7 @@ class fdNIRS:
             # ax.plot(t, savgol_filter(self.phases[:, i + 4], window_length=11, polyorder=3, mode='nearest'), color='red')
             # ax.plot(t, x, color='red')
             # ax.plot(t, filtered, color='red', alpha=0.5)
-            # ax.axvspan(occlusion_interval[0], occlusion_interval[1], color='green', alpha=0.15)
+            ax.axvspan(occlusion_interval[0], occlusion_interval[1], color='green', alpha=0.15)
             ax.set_title(f'{self.separations.ravel()[i + 4]}mm separation, Pair {i//2 + 1}')
             ax.set_ylabel('Degrees')
             ax.set_xlabel('Time(s)')
@@ -384,7 +384,7 @@ class fdNIRS:
         plt.plot(t, absorption_690, color='red', alpha=0.35, linewidth=3, label='690nm')
         plt.axhline(0.0081, color='red', linestyle='dashed', label='Expected-690 nm')
         plt.axhline(0.0077, color='blue', linestyle='dashed', label='Expected-830 nm')
-        # plt.axvspan(occlusion_interval[0], occlusion_interval[1], color='green', alpha=0.15, label=f'Occlusion')
+        plt.axvspan(occlusion_interval[0], occlusion_interval[1], color='green', alpha=0.15, label=f'Occlusion')
 
         plt.legend()
         plt.title(f'Absorption Coefficients')
