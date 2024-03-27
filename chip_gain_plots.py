@@ -18,6 +18,7 @@ amp_1 = np.array([219, 251, 284, 318, 350,
                   1844, 1852, 1861, 1866, 1870,
                   1879, 1889, 1892, 1901, 1908,
                   1915, 1918, 1924, 1921, 1923])
+amp_1_linear = v_in * 3.25 + 56.73
 amp_2 = np.array([254, 295, 337, 381, 425,
                  454, 495, 536, 577, 618,
                  651, 691, 733, 775, 812,
@@ -42,14 +43,15 @@ axes[0].scatter(x=v_in, y=amp_1, s=40, label='Channel-1', color='r')
 m, b = np.polyfit(v_in[:10], amp_1[:10], 1)
 axes[0].plot(v_in, m * v_in + b, '--r',
              linewidth=2, alpha=0.5,
-             label=f'Channel-1 Fit\nSlope:{round(m, 2)}')
+             label=f'Channel-1 Fit\nSlope:{round(m, 4)}')
 axes[0].set_ylabel('Output (mV)')
 
 axes[1].scatter(x=v_in, y=amp_2, s=40, label='Channel-2', color='b')
 m, b = np.polyfit(v_in[:10], amp_2[:10], 1)
+print(m, b)
 axes[1].plot(v_in, m * v_in + b, '--b',
              linewidth=2, alpha=0.5,
-             label=f'Channel-2 Fit\nSlope:{round(m, 2)}')
+             label=f'Channel-2 Fit\nSlope:{round(m, 4)}')
 axes[1].set_xlabel('Input (mV)')
 axes[1].set_ylabel('Output (mV)')
 axes[0].legend()
@@ -57,4 +59,9 @@ axes[1].legend()
 axes[0].grid()
 axes[1].grid()
 fig.tight_layout()
+
+
+closest = min(amp_1, key=lambda x: abs(x-1552))
+index_closest = np.where(amp_1 == closest)[0]
+print(amp_1_linear[index_closest])
 plt.show()
